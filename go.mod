@@ -1,4 +1,4 @@
-module proof-v4-go
+module github.com/unpolaris/proof-v4-go
 
 go 1.17
 
