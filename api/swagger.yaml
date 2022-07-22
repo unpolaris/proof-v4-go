@@ -1,0 +1,680 @@
+openapi: 3.0.1
+info:
+  title: 存证溯源接口
+  description: 尽量通用的存证溯源平台，目前是简单用户体系。
+  contact: {}
+  version: "0.1"
+servers:
+- url: /
+paths:
+  /api/auto_proofs:
+    post:
+      tags:
+      - 存证 proof
+      summary: 添加批量自动存证
+      parameters:
+      - name: FZM-Ca-App-Id
+        in: header
+        description: 应用id
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: FZM-Ca-App-Key
+        in: header
+        description: 应用公钥
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: FZM-Ca-Sign
+        in: header
+        description: 签名
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: FZM-Ca-Nonce
+        in: header
+        description: 随机字符串
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: FZM-Ca-Timestamp
+        in: header
+        description: 时间戳
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: FZM-Ca-Sign-Type
+        in: header
+        description: 签名方式，HMAC-SHA256（默认）或MD5
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      requestBody:
+        description: 添加批量自动存证
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/model.ReqAutoProof'
+        required: true
+      responses:
+        "200":
+          description: "{\"code\":200,\"msg\":\"OK\",\"data\":{}}"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200'
+      security:
+      - ApiKeyAuth: []
+      x-codegen-request-body-name: data
+  /v1/proof/GetProofs:
+    post:
+      tags:
+      - Proof
+      summary: 获取多个指定hash的存证信息
+      description: get proof by hashes
+      requestBody:
+        description: INPUT
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/proof_GetProofs_body'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/swagger.ListProofResult'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_400'
+      x-codegen-request-body-name: input
+  /v1/proof/List:
+    post:
+      tags:
+      - Proof
+      summary: 获取存证列表
+      description: list proof of organization/sender
+      requestBody:
+        description: INPUT
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/proof_List_body'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/swagger.ListProofResult'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_400'
+      x-codegen-request-body-name: input
+components:
+  schemas:
+    model.AutoProofIdErr:
+      type: object
+      properties:
+        err:
+          type: string
+          description: 错误原因
+        id:
+          type: string
+      example:
+        err: err
+        id: id
+    model.AutoProofIdHash:
+      type: object
+      properties:
+        id:
+          type: string
+        tx_hash:
+          type: string
+          description: 自动存证hash
+      example:
+        tx_hash: tx_hash
+        id: id
+    model.ProofBanner:
+      type: object
+      properties:
+        hash:
+          type: string
+        target:
+          type: string
+    model.ProofExtDetail:
+      type: object
+      properties:
+        basehash:
+          type: string
+        prehash:
+          type: string
+        存证名称:
+          type: string
+        存证类型:
+          type: string
+    model.ProofExtInfo:
+      type: object
+      properties:
+        ext:
+          type: string
+        ext_detail:
+          $ref: '#/components/schemas/model.ProofExtDetail'
+        is_increment:
+          type: boolean
+        note:
+          type: string
+        note_detail:
+          $ref: '#/components/schemas/model.ProofNoteDetail'
+        prikey:
+          type: string
+          description: 自定义私钥
+        template_id:
+          type: integer
+        version:
+          type: string
+    model.ProofNoteDetail:
+      type: object
+      properties:
+        banners:
+          type: array
+          description: 增量不用，基础可能要
+          items:
+            $ref: '#/components/schemas/model.ProofBanner'
+        evidenceName:
+          type: string
+          description: 基础存证的名字
+        stepName:
+          type: string
+          description: 增量存证的名字
+        userIcon:
+          type: string
+        userName:
+          type: string
+        version:
+          type: integer
+    model.ReqAutoProof:
+      required:
+      - detail
+      type: object
+      properties:
+        detail:
+          type: string
+        ext:
+          $ref: '#/components/schemas/model.ProofExtInfo'
+        id:
+          type: string
+    model.ResAutoProof:
+      type: object
+      properties:
+        fail:
+          type: array
+          items:
+            $ref: '#/components/schemas/model.AutoProofIdErr'
+        suc:
+          type: array
+          items:
+            $ref: '#/components/schemas/model.AutoProofIdHash'
+      example:
+        suc:
+        - tx_hash: tx_hash
+          id: id
+        - tx_hash: tx_hash
+          id: id
+        fail:
+        - err: err
+          id: id
+        - err: err
+          id: id
+    model.Response:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: 状态码
+          example: 200
+          x-order: "000"
+        msg:
+          type: string
+          description: 消息
+          example: OK
+          x-order: "001"
+        data:
+          type: object
+          properties: {}
+          description: 数据
+          example: {}
+          x-order: "002"
+      example:
+        msg: OK
+        code: 200
+        data: {}
+    rpcutils.Hashes:
+      type: object
+      properties:
+        hash:
+          type: array
+          description: 哈希列表
+          items:
+            type: string
+    swagger.ClientRequest:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: 请求标识
+        method:
+          type: string
+          description: 方法
+        params:
+          type: object
+          properties: {}
+          description: 参数
+    swagger.ListProofResult:
+      type: object
+      properties:
+        error:
+          type: object
+          properties: {}
+          description: 错误描述
+          example: {}
+        id:
+          type: integer
+          description: 请求标识
+        result:
+          type: array
+          description: 返回结果
+          items:
+            $ref: '#/components/schemas/swagger.Proof'
+      example:
+        result:
+        - proof_note: proof_note
+          proof_original: proof_original
+          evidenceName: evidenceName
+          user_auth_type: 2
+          user_name: user_name
+          update_hash: update_hash
+          proof_id: proof_id
+          proof_block_hash: proof_block_hash
+          proof_data: proof_data
+          proof_block_time: 6
+          proof_deleted_note: proof_deleted_note
+          proof_organization: proof_organization
+          user_phone: user_phone
+          user_icon: user_icon
+          source_hash: {}
+          proof_height_index: 5
+          user_enterprise_name: user_enterprise_name
+          user_email: user_email
+          proof_tx_hash: proof_tx_hash
+          update_version: 5
+          proof_sender: proof_sender
+          version: 7
+          proof_deleted: proof_deleted
+          proof_deleted_flag: true
+          basehash: basehash
+          prehash: prehash
+          proof_height: 1
+          user_real_name: user_real_name
+        - proof_note: proof_note
+          proof_original: proof_original
+          evidenceName: evidenceName
+          user_auth_type: 2
+          user_name: user_name
+          update_hash: update_hash
+          proof_id: proof_id
+          proof_block_hash: proof_block_hash
+          proof_data: proof_data
+          proof_block_time: 6
+          proof_deleted_note: proof_deleted_note
+          proof_organization: proof_organization
+          user_phone: user_phone
+          user_icon: user_icon
+          source_hash: {}
+          proof_height_index: 5
+          user_enterprise_name: user_enterprise_name
+          user_email: user_email
+          proof_tx_hash: proof_tx_hash
+          update_version: 5
+          proof_sender: proof_sender
+          version: 7
+          proof_deleted: proof_deleted
+          proof_deleted_flag: true
+          basehash: basehash
+          prehash: prehash
+          proof_height: 1
+          user_real_name: user_real_name
+        id: 0
+        error: {}
+    swagger.Proof:
+      type: object
+      properties:
+        basehash:
+          type: string
+          description: 增量存证依赖的主hash
+        evidenceName:
+          type: string
+          description: 存证名称
+        prehash:
+          type: string
+          description: 增量存证前一个hash
+        proof_block_hash:
+          type: string
+          description: 区块hash
+        proof_block_time:
+          type: integer
+          description: 上链时间
+        proof_data:
+          type: string
+          description: 存证数据
+        proof_deleted:
+          type: string
+          description: 删除存证交易hash
+        proof_deleted_flag:
+          type: boolean
+          description: 删除标志
+        proof_deleted_note:
+          type: string
+          description: 删除备注
+        proof_height:
+          type: integer
+          description: 存证高度
+        proof_height_index:
+          type: integer
+          description: 存证高度索引
+        proof_id:
+          type: string
+          description: 存证id
+        proof_note:
+          type: string
+          description: 存证备注
+        proof_organization:
+          type: string
+          description: 组织
+        proof_original:
+          type: string
+          description: 来源
+        proof_sender:
+          type: string
+          description: 存证发起者
+        proof_tx_hash:
+          type: string
+          description: 交易哈希
+        source_hash:
+          type: object
+          properties: {}
+          description: 依赖交易哈希
+          example: {}
+        update_hash:
+          type: string
+          description: 更新依赖主哈希
+        update_version:
+          type: integer
+          description: 更新版本
+        user_auth_type:
+          type: integer
+          description: 用户认证类型
+        user_email:
+          type: string
+          description: 用户邮箱
+        user_enterprise_name:
+          type: string
+          description: 用户企业名称
+        user_icon:
+          type: string
+          description: 用户头像链接地址
+        user_name:
+          type: string
+          description: 用户名
+        user_phone:
+          type: string
+          description: 用户手机号
+        user_real_name:
+          type: string
+          description: 用户真是名称
+        version:
+          type: integer
+          description: 存证版本
+      example:
+        proof_note: proof_note
+        proof_original: proof_original
+        evidenceName: evidenceName
+        user_auth_type: 2
+        user_name: user_name
+        update_hash: update_hash
+        proof_id: proof_id
+        proof_block_hash: proof_block_hash
+        proof_data: proof_data
+        proof_block_time: 6
+        proof_deleted_note: proof_deleted_note
+        proof_organization: proof_organization
+        user_phone: user_phone
+        user_icon: user_icon
+        source_hash: {}
+        proof_height_index: 5
+        user_enterprise_name: user_enterprise_name
+        user_email: user_email
+        proof_tx_hash: proof_tx_hash
+        update_version: 5
+        proof_sender: proof_sender
+        version: 7
+        proof_deleted: proof_deleted
+        proof_deleted_flag: true
+        basehash: basehash
+        prehash: prehash
+        proof_height: 1
+        user_real_name: user_real_name
+    swagger.QFetch:
+      type: object
+      properties:
+        fetch_source:
+          type: boolean
+          description: 是否获取
+        keys:
+          type: array
+          description: 字段名列表
+          items:
+            type: string
+    swagger.QMatch:
+      type: object
+      properties:
+        key:
+          type: string
+          description: 字段名
+        value:
+          type: object
+          properties: {}
+          description: 值
+    swagger.QMultiMatch:
+      type: object
+      properties:
+        keys:
+          type: array
+          description: 字段名列表
+          items:
+            type: string
+        value:
+          type: object
+          properties: {}
+          description: 值
+    swagger.QPage:
+      type: object
+      properties:
+        number:
+          type: integer
+          description: 当前页数
+        size:
+          type: integer
+          description: 大小
+    swagger.QRange:
+      type: object
+      properties:
+        end:
+          type: object
+          properties: {}
+          description: 小于等于
+        gt:
+          type: object
+          properties: {}
+          description: 大于
+        key:
+          type: string
+          description: 字段名
+        lt:
+          type: object
+          properties: {}
+          description: 小于
+        start:
+          type: object
+          properties: {}
+          description: 大于等于
+    swagger.QSize:
+      type: object
+      properties:
+        size:
+          type: integer
+          description: 大小
+    swagger.QSort:
+      type: object
+      properties:
+        ascending:
+          type: boolean
+          description: 是否递增
+        key:
+          type: string
+          description: 字段名
+    swagger.Query:
+      type: object
+      properties:
+        fetch:
+          $ref: '#/components/schemas/swagger.QFetch'
+        filter:
+          type: array
+          description: 过滤
+          items:
+            $ref: '#/components/schemas/swagger.QMatch'
+        match:
+          type: array
+          description: 且匹配
+          items:
+            $ref: '#/components/schemas/swagger.QMatch'
+        match_one:
+          type: array
+          description: 或匹配
+          items:
+            $ref: '#/components/schemas/swagger.QMatch'
+        multi_match:
+          type: array
+          description: 多字段匹配
+          items:
+            $ref: '#/components/schemas/swagger.QMultiMatch'
+        not:
+          type: array
+          description: 非匹配
+          items:
+            $ref: '#/components/schemas/swagger.QMatch'
+        page:
+          $ref: '#/components/schemas/swagger.QPage'
+        range:
+          type: array
+          description: 范围
+          items:
+            $ref: '#/components/schemas/swagger.QRange'
+        size:
+          $ref: '#/components/schemas/swagger.QSize'
+        sort:
+          type: array
+          description: 排序
+          items:
+            $ref: '#/components/schemas/swagger.QSort'
+    swagger.ServerResponse:
+      type: object
+      properties:
+        error:
+          type: object
+          properties: {}
+          description: 错误描述
+        id:
+          type: integer
+          description: 请求标识
+        result:
+          type: object
+          properties: {}
+          description: 返回结果
+    inline_response_200:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/model.ResAutoProof'
+        model.Response:
+          $ref: '#/components/schemas/model.Response'
+      example:
+        model.Response:
+          msg: OK
+          code: 200
+          data: {}
+        data:
+          suc:
+          - tx_hash: tx_hash
+            id: id
+          - tx_hash: tx_hash
+            id: id
+          fail:
+          - err: err
+            id: id
+          - err: err
+            id: id
+    proof_GetProofs_body:
+      allOf:
+      - $ref: '#/components/schemas/swagger.ClientRequest'
+      - type: object
+        properties:
+          params:
+            type: array
+            items:
+              $ref: '#/components/schemas/rpcutils.Hashes'
+    inline_response_400:
+      type: object
+      properties:
+        error:
+          type: string
+        swagger.ServerResponse:
+          $ref: '#/components/schemas/swagger.ServerResponse'
+    proof_List_body:
+      allOf:
+      - $ref: '#/components/schemas/swagger.ClientRequest'
+      - type: object
+        properties:
+          params:
+            type: array
+            items:
+              $ref: '#/components/schemas/swagger.Query'
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      name: Authorization
+      in: header
+x-original-swagger-version: "2.0"
